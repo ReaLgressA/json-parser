@@ -1,6 +1,6 @@
 {
     "name": "MiniJSON",
-    "rootNamespace": "MiniJSON",
+    "rootNamespace": "JsonParser",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],

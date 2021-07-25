@@ -1,4 +1,5 @@
-public interface IJsonRawInterface
-{
-	string ToJsonValue();
+namespace JsonParser {
+    public interface IJsonRawInterface {
+        string ToJsonValue();
+    }
 }

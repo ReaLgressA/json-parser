@@ -1,4 +1,5 @@
-public interface IJsonPrimitiveInterface
-{
-	object ToJsonObject();
+namespace JsonParser {
+    public interface IJsonPrimitiveInterface {
+        object ToJsonObject();
+    }
 }

@@ -1,7 +1,7 @@
 {
     "name": "com.realgressa.jsonparser",
     "displayName": "Json Parser",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "unity": "2020.3",
     "description": "MiniJSON as a package for Unity",
     "keywords": [
