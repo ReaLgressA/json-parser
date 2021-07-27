@@ -2,7 +2,6 @@ using System.Collections;
 using UnityEngine;
 
 namespace JsonParser {
-
     public class SerializedVector2 : IJsonInterface {
 
         public static readonly SerializedVector2 Zero = new SerializedVector2();

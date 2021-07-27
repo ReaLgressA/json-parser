@@ -1,10 +1,10 @@
 using System;
 using System.Collections;
-using System.Text;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Text;
 using UnityEngine;
-namespace JsonParser {
+
 /* Based on the JSON parser from 
  * http://techblog.procurios.nl/k/618/news/view/14605/14863/How-do-I-write-my-own-parser-for-JSON.html
  * 
@@ -18,6 +18,8 @@ namespace JsonParser {
 /// JSON uses Arrays and Objects. These correspond here to the datatypes ArrayList and Hashtable.
 /// All numbers are parsed to doubles.
 /// </summary>
+
+namespace JsonParser {
 public class MiniJSON {
     private const int TOKEN_NONE = 0;
     private const int TOKEN_CURLY_OPEN = 1;
@@ -47,20 +49,20 @@ public class MiniJSON {
     /// <returns>An ArrayList, a Hashtable, a double, a string, null, true, or false</returns>
     public static object JsonDecode(string json) {
         // save the string for debug information
-        MiniJSON.lastDecode = json;
+        lastDecode = json;
 
         if (json != null) {
             char[] charArray = json.ToCharArray();
             int index = 0;
             bool success = true;
-            object value = MiniJSON.ParseValue(charArray, ref index, ref success);
+            object value = ParseValue(charArray, ref index, ref success);
 
-            MiniJSON.lastErrorIndex = success ? -1 : index;
+            lastErrorIndex = success ? -1 : index;
 
             return value;
-        } else {
-            return null;
         }
+
+        return null;
     }
 
 
@@ -71,7 +73,7 @@ public class MiniJSON {
     /// <returns>A JSON encoded string, or null if object 'json' is not serializable</returns>
     public static string JsonEncode(object json, bool prettyPrint = false) {
         StringBuilder builder = new StringBuilder(BUILDER_CAPACITY);
-        bool success = prettyPrint ? MiniJSON.SerializeValuePretty(json, builder, 0) : MiniJSON.SerializeValue(json, builder);
+        bool success = prettyPrint ? SerializeValuePretty(json, builder, 0) : SerializeValue(json, builder);
 
         return (success ? builder.ToString() : null);
     }
@@ -82,7 +84,7 @@ public class MiniJSON {
     /// </summary>
     /// <returns></returns>
     public static bool LastDecodeSuccessful() {
-        return (MiniJSON.lastErrorIndex == -1);
+        return (lastErrorIndex == -1);
     }
 
 
@@ -91,7 +93,7 @@ public class MiniJSON {
     /// </summary>
     /// <returns></returns>
     public static int GetLastErrorIndex() {
-        return MiniJSON.lastErrorIndex;
+        return lastErrorIndex;
     }
 
 
@@ -101,21 +103,21 @@ public class MiniJSON {
     /// </summary>
     /// <returns></returns>
     public static string GetLastErrorSnippet() {
-        if (MiniJSON.lastErrorIndex == -1) {
+        if (lastErrorIndex == -1) {
             return "";
-        } else {
-            int startIndex = MiniJSON.lastErrorIndex - 5;
-            int endIndex = MiniJSON.lastErrorIndex + 15;
-            if (startIndex < 0) {
-                startIndex = 0;
-            }
-
-            if (endIndex >= MiniJSON.lastDecode.Length) {
-                endIndex = MiniJSON.lastDecode.Length - 1;
-            }
-
-            return MiniJSON.lastDecode.Substring(startIndex, endIndex - startIndex + 1);
         }
+
+        int startIndex = lastErrorIndex - 5;
+        int endIndex = lastErrorIndex + 15;
+        if (startIndex < 0) {
+            startIndex = 0;
+        }
+
+        if (endIndex >= lastDecode.Length) {
+            endIndex = lastDecode.Length - 1;
+        }
+
+        return lastDecode.Substring(startIndex, endIndex - startIndex + 1);
     }
 
 
@@ -131,11 +133,13 @@ public class MiniJSON {
         bool done = false;
         while (!done) {
             token = LookAhead(json, index);
-            if (token == MiniJSON.TOKEN_NONE) {
+            if (token == TOKEN_NONE) {
                 return null;
-            } else if (token == MiniJSON.TOKEN_COMMA) {
+            }
+
+            if (token == TOKEN_COMMA) {
                 NextToken(json, ref index);
-            } else if (token == MiniJSON.TOKEN_CURLY_CLOSE) {
+            } else if (token == TOKEN_CURLY_CLOSE) {
                 NextToken(json, ref index);
                 return table;
             } else {
@@ -147,7 +151,7 @@ public class MiniJSON {
 
                 // :
                 token = NextToken(json, ref index);
-                if (token != MiniJSON.TOKEN_COLON) {
+                if (token != TOKEN_COLON) {
                     return null;
                 }
 
@@ -175,11 +179,13 @@ public class MiniJSON {
         bool done = false;
         while (!done) {
             int token = LookAhead(json, index);
-            if (token == MiniJSON.TOKEN_NONE) {
+            if (token == TOKEN_NONE) {
                 return null;
-            } else if (token == MiniJSON.TOKEN_COMMA) {
+            }
+
+            if (token == TOKEN_COMMA) {
                 NextToken(json, ref index);
-            } else if (token == MiniJSON.TOKEN_SQUARED_CLOSE) {
+            } else if (token == TOKEN_SQUARED_CLOSE) {
                 NextToken(json, ref index);
                 break;
             } else {
@@ -199,24 +205,24 @@ public class MiniJSON {
 
     protected static object ParseValue(char[] json, ref int index, ref bool success) {
         switch (LookAhead(json, index)) {
-            case MiniJSON.TOKEN_STRING:
+            case TOKEN_STRING:
                 return ParseString(json, ref index);
-            case MiniJSON.TOKEN_NUMBER:
+            case TOKEN_NUMBER:
                 return ParseNumber(json, ref index);
-            case MiniJSON.TOKEN_CURLY_OPEN:
+            case TOKEN_CURLY_OPEN:
                 return ParseObject(json, ref index);
-            case MiniJSON.TOKEN_SQUARED_OPEN:
+            case TOKEN_SQUARED_OPEN:
                 return ParseArray(json, ref index);
-            case MiniJSON.TOKEN_TRUE:
+            case TOKEN_TRUE:
                 NextToken(json, ref index);
                 return bool.Parse("TRUE");
-            case MiniJSON.TOKEN_FALSE:
+            case TOKEN_FALSE:
                 NextToken(json, ref index);
                 return bool.Parse("FALSE");
-            case MiniJSON.TOKEN_NULL:
+            case TOKEN_NULL:
                 NextToken(json, ref index);
                 return null;
-            case MiniJSON.TOKEN_NONE:
+            case TOKEN_NONE:
                 break;
         }
 
@@ -244,7 +250,9 @@ public class MiniJSON {
             if (c == '"') {
                 complete = true;
                 break;
-            } else if (c == '\\') {
+            }
+
+            if (c == '\\') {
                 if (index == json.Length) {
                     break;
                 }
@@ -274,7 +282,7 @@ public class MiniJSON {
 
                         // Drop in the HTML markup for the unicode character
                         //s += "&#x" + new string( unicodeCharArray ) + ";";
-                        uint codePoint = uint.Parse(new string(unicodeCharArray), System.Globalization.NumberStyles.HexNumber);
+                        uint codePoint = uint.Parse(new string(unicodeCharArray), NumberStyles.HexNumber);
                         // convert the integer codepoint to a unicode char and add to string
                         s += char.ConvertFromUtf32((int)codePoint);
 
@@ -346,24 +354,24 @@ public class MiniJSON {
         EatWhitespace(json, ref index);
 
         if (index == json.Length) {
-            return MiniJSON.TOKEN_NONE;
+            return TOKEN_NONE;
         }
 
         char c = json[index];
         index++;
         switch (c) {
             case '{':
-                return MiniJSON.TOKEN_CURLY_OPEN;
+                return TOKEN_CURLY_OPEN;
             case '}':
-                return MiniJSON.TOKEN_CURLY_CLOSE;
+                return TOKEN_CURLY_CLOSE;
             case '[':
-                return MiniJSON.TOKEN_SQUARED_OPEN;
+                return TOKEN_SQUARED_OPEN;
             case ']':
-                return MiniJSON.TOKEN_SQUARED_CLOSE;
+                return TOKEN_SQUARED_CLOSE;
             case ',':
-                return MiniJSON.TOKEN_COMMA;
+                return TOKEN_COMMA;
             case '"':
-                return MiniJSON.TOKEN_STRING;
+                return TOKEN_STRING;
             case '0':
             case '1':
             case '2':
@@ -375,9 +383,9 @@ public class MiniJSON {
             case '8':
             case '9':
             case '-':
-                return MiniJSON.TOKEN_NUMBER;
+                return TOKEN_NUMBER;
             case ':':
-                return MiniJSON.TOKEN_COLON;
+                return TOKEN_COLON;
         }
         index--;
 
@@ -391,7 +399,7 @@ public class MiniJSON {
                 json[index + 3] == 's' &&
                 json[index + 4] == 'e') {
                 index += 5;
-                return MiniJSON.TOKEN_FALSE;
+                return TOKEN_FALSE;
             }
         }
 
@@ -402,7 +410,7 @@ public class MiniJSON {
                 json[index + 2] == 'u' &&
                 json[index + 3] == 'e') {
                 index += 4;
-                return MiniJSON.TOKEN_TRUE;
+                return TOKEN_TRUE;
             }
         }
 
@@ -413,11 +421,11 @@ public class MiniJSON {
                 json[index + 2] == 'l' &&
                 json[index + 3] == 'l') {
                 index += 4;
-                return MiniJSON.TOKEN_NULL;
+                return TOKEN_NULL;
             }
         }
 
-        return MiniJSON.TOKEN_NONE;
+        return TOKEN_NONE;
     }
 
     #endregion
@@ -693,7 +701,7 @@ public class MiniJSON {
             SerializeDictionary((Dictionary<string, object>)value, builder);
         } else if (value is ArrayList) {
             SerializeArray((ArrayList)value, builder);
-        } else if ((value is bool) && ((bool)value == true)) {
+        } else if ((value is bool) && (bool)value) {
             builder.Append("true");
         } else if ((value is bool) && ((bool)value == false)) {
             builder.Append("false");
@@ -751,7 +759,7 @@ public class MiniJSON {
             SerializeDictionaryPretty((Dictionary<string, object>)value, builder, depth);
         } else if (value is ArrayList) {
             SerializeArrayPretty((ArrayList)value, builder, depth);
-        } else if ((value is bool) && ((bool)value == true)) {
+        } else if ((value is bool) && (bool)value) {
             builder.Append("true");
         } else if ((value is bool) && ((bool)value == false)) {
             builder.Append("false");
@@ -962,14 +970,14 @@ public static class MiniJsonExtensions {
         return ht.Contains(key) && ht[key] is string ? ht[key] as string : defaultValue;
     }
 
-    public static UnityEngine.Color GetColor(this Hashtable ht, string key, UnityEngine.Color defaultValue) {
+    public static Color GetColor(this Hashtable ht, string key, Color defaultValue) {
         if (ht.Contains(key) && ht[key] is string) {
-            UnityEngine.ColorUtility.TryParseHtmlString(ht[key] as string, out defaultValue);
+            ColorUtility.TryParseHtmlString(ht[key] as string, out defaultValue);
         }
         return defaultValue;
     }
 
-    public static void Write(this Hashtable ht, string key, UnityEngine.Color color) {
+    public static void Write(this Hashtable ht, string key, Color color) {
         ht[key] = ColorUtility.ToHtmlStringRGBA(color);
     }
 
@@ -1006,19 +1014,19 @@ public static class MiniJsonExtensions {
     }
 
     public static Vector2 GetVector2(this Hashtable ht, string key) {
-        return ht.GetAs<SerializedVector2>(key, SerializedVector2.Zero).Value;
+        return ht.GetAs(key, SerializedVector2.Zero).Value;
     }
 
     public static Vector2 GetVector2(this Hashtable ht, string key, Vector2 defaultValue) {
-        return ht.GetAs<SerializedVector2>(key, new SerializedVector2(defaultValue)).Value;
+        return ht.GetAs(key, new SerializedVector2(defaultValue)).Value;
     }
 
     public static Vector3 GetVector3(this Hashtable ht, string key) {
-        return ht.GetAs<SerializedVector3>(key, SerializedVector3.Zero).Value;
+        return ht.GetAs(key, SerializedVector3.Zero).Value;
     }
 
     public static Vector3 GetVector3(this Hashtable ht, string key, Vector3 defaultValue) {
-        return ht.GetAs<SerializedVector3>(key, new SerializedVector3(defaultValue)).Value;
+        return ht.GetAs(key, new SerializedVector3(defaultValue)).Value;
     }
 
     public static long GetLong(this Hashtable ht, string key) {
@@ -1042,7 +1050,7 @@ public static class MiniJsonExtensions {
     }
 
     public static T GetEnum<T>(this Hashtable ht, string key, T defaultValue) {
-        return ht.Contains(key) && ht[key] != null ? ParseEnum<T>((string)ht[key], defaultValue) : defaultValue;
+        return ht.Contains(key) && ht[key] != null ? ParseEnum((string)ht[key], defaultValue) : defaultValue;
     }
 
     private static T ParseEnum<T>(string value, T defaultValue) {
@@ -1058,7 +1066,7 @@ public static class MiniJsonExtensions {
     public static T GetEnumFromIndex<T>(this Hashtable ht, string key, T defaultValue) {
         if (ht.Contains(key) && ht[key] != null) {
             string name = Enum.GetName(typeof(T), ht.GetInt32(key));
-            return ParseEnum<T>(name, defaultValue);
+            return ParseEnum(name, defaultValue);
         }
         return defaultValue;
     }
@@ -1086,7 +1094,7 @@ public static class MiniJsonExtensions {
                 if (array[i] != null) {
                     string enumName = array[i] as string;
                     if (enumName != null) {
-                        res[i] = ParseEnum<T>(enumName, defaultValue);
+                        res[i] = ParseEnum(enumName, defaultValue);
                     } else {
                         res[i] = (T)array[i];
                     }
@@ -1117,6 +1125,21 @@ public static class MiniJsonExtensions {
             return res;
         }
 
+        return defaultValue;
+    }
+    
+    public static uint[] GetArray(this Hashtable ht, string key, uint[] defaultValue = null) {
+        if (ht.Contains(key) && ht[key] != null) {
+            ArrayList array = ht[key] as ArrayList;
+            if (array == null) {
+                return defaultValue;
+            }
+            uint[] res = new uint[array.Count];
+            for (int i = 0; i < array.Count; i++) {
+                res[i] = Convert.ToUInt32(array[i]); //(uint)array[i];
+            }
+            return res;
+        }
         return defaultValue;
     }
 
